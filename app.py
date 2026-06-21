@@ -74,15 +74,19 @@ def render_journal_tab(journal_name):
     
     with col_list:
         st.markdown("### 📅 ארכיון מאמרים מסוכמים")
-        selected_month = st.selectbox("בחר חודש לצפייה:", months_list, key=f"m_{journal_name}")
+        selected_month = st.selectbox("בחר חודש לצפייה:", months_list, key=f"month_{journal_name}")
         
         rows = db_data.get(journal_name, [])
         found_any = False
         
         if len(rows) > 1:
             for row_idx, row in enumerate(rows[1:]):
-                # מבנה השורה החדש בטבלה: [0]=מזהה, [1]=חודש, [2]=כותרת וכותבים, [3]=סיכום, [4]=שורה תחתונה, [5]=נושא
-                if len(row) >= 6 and str(row[1]).strip() == selected_month:
+                # בדיקה חכמה וגמישה שמתגברת על שינויי הפורמט של גוגל שיטס
+                row_month = str(row[1]).strip()
+                clean_selected = selected_month.strip()
+                
+                # התאמה מלאה: בודק התאמה ישירה, או התאמה ללא האפס המוביל (למשל 5.2025 במקום 05.2025)
+                if len(row) >= 6 and (row_month == clean_selected or row_month == clean_selected.lstrip('0') or clean_selected in row_month):
                     found_any = True
                     article_id = row[0]
                     
