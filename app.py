@@ -186,7 +186,7 @@ def render_journal_tab(journal_name):
                     try:
                         pdf_reader = pypdf.PdfReader(uploaded_file)
                         article_text = ""
-                        for page in pdf_reader.pages[:15]:
+                        for page in pdf_reader.pages[:6]:
                             text = page.extract_text()
                             if text: article_text += text + "\n"
                         
