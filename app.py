@@ -2,74 +2,124 @@ import streamlit as st
 import google.generativeai as genai
 import pypdf
 import json
+import requests
+from datetime import datetime
 
-# הגדרות עיצוב בסיסי בעברית
-st.set_page_config(page_title="מנתח מאמרים - שלב א'", layout="centered")
+# הגדרת עיצוב הממשק בעברית
+st.set_page_config(page_title="מערכת מאמרים משותפת - שלב א'", layout="wide")
 st.markdown("""
     <style>
     .reportview-container .main .block-container { text-align: right; direction: RTL; }
-    div.stButton > button:first-child { background-color: #008080; color: white; width: 100%; font-weight: bold; }
-    label { font-weight: bold !important; }
+    div.stButton > button:first-child { background-color: #008080; color: white; font-weight: bold; }
+    .stTextArea textarea { direction: RTL; text-align: right; }
     </style>
 """, unsafe_allow_html=True)
 
-st.title("🔬 מנתח המאמרים הרשמי - שלב א'")
-st.write("העלו את קובץ ה-PDF של המאמר, וקבלו את הסיכומים מוכנים להעתקה ישירות לטבלת ה-Sheets שלכם.")
+st.title("🗂️ לוח בקרה משותף: סיכומי מאמרים לשלב א'")
+st.write("מערכת ענן מרכזית עבור כל המתמחים. המידע מסתנכרן אוטומטית מול קובץ ה-Google Sheets המחלקתי.")
 
-# הזנת מפתח API
-api_key = st.text_input("שלב 1: הזינו את מפתח ה-Gemini API שלכם:", type="password")
+# הגדרות מפתח וקישור בסרגל הצד
+with st.sidebar:
+    st.header("🔑 הגדרות חיבור")
+    api_key = st.text_input("הזינו מפתח Gemini API:", type="password")
+    # כאן מדביקים את הכתובת שקיבלתם מחלק 1 בשלב 4
+    sheets_url = st.text_input("הזינו את כתובת ה-Web App של ה-Sheets שלכם:", type="password")
 
-# העלאת קובץ PDF
-uploaded_file = st.file_uploader("שלב 2: בחרו קובץ PDF של מאמר מדעי", type=["pdf"])
+# יצירת רשימת 36 החודשים (מאי 2025 עד מאי 2028)
+months_list = []
+start_date = datetime(2025, 5, 1)
+current = start_date
+for _ in range(37):
+    months_list.append(current.strftime("%m.%Y"))
+    if current.month == 12:
+        current = datetime(current.year + 1, 1, 1)
+    else:
+        current = datetime(current.year, current.month + 1, 1)
 
-if uploaded_file and api_key:
-    if st.button("שלב 3: נתח מאמר והפק סיכומים 🚀"):
-        with st.spinner("ה-AI קורא ומנתח את כל עמודי המאמר..."):
-            try:
-                # חילוץ טקסט מה-PDF
-                pdf_reader = pypdf.PdfReader(uploaded_file)
-                article_text = ""
-                for page in pdf_reader.pages[:15]:
-                    text = page.extract_text()
-                    if text:
-                        article_text += text + "\n"
+# טעינת הנתונים הקיימים ישירות מ-Google Sheets בזמן אמת
+db_data = {"JCP": [], "JOP": [], "COIR": []}
+if sheets_url:
+    try:
+        response = requests.get(sheets_url)
+        if response.status_code == 200:
+            db_data = response.json()
+    except:
+        st.sidebar.error("לא הצלחנו למשוך נתונים מה-Sheets. ודאו שהקישור תקין.")
 
-                if len(article_text.strip()) < 100:
-                    st.error("שגיאה: לא הצלחנו לקרוא את הטקסט מהקובץ. ודאו שה-PDF אינו סרוק כתמונה בלבד.")
-                else:
-                    # חיבור ל-Gemini
+# יצירת 3 הלשוניות לעיתונים
+tab_jcp, tab_jop, tab_coir = st.tabs(["📰 עיתון JCP", "📰 עיתון JOP", "📰 עיתון COIR"])
+
+def render_journal_tab(journal_name):
+    selected_month = st.selectbox(f"בחר חודש:", months_list, key=f"m_{journal_name}")
+    
+    st.subheader(f"📊 מאמרים קיימים בטבלה לחודש {selected_month}")
+    
+    # הצגת המאמרים הקיימים ב-Google Sheets לחודש הנבחר
+    rows = db_data.get(journal_name, [])
+    found_any = False
+    
+    if len(rows) > 1: # אם יש יותר משורת הכותרות
+        for idx, row in enumerate(rows[1:]):
+            if len(row) >= 5 and str(row[0]).strip() == selected_month:
+                found_any = True
+                with st.expander(f"📄 {row[1]}"):
+                    st.markdown(f"**📝 סיכום מורחב (10 שורות):**\n{row[2]}")
+                    st.markdown(f"**🎯 שורה תחתונה:** {row[3]}")
+                    st.caption(f"🏷️ נושא: {row[4]}")
+                    
+    if not found_any:
+        st.info("אין עדיין מאמרים מסוכמים לחודש זה ב-Google Sheets.")
+        
+    st.write("---")
+    st.markdown(f"### ➕ העלאה וסיכום מאמר חדש ל-{journal_name} ({selected_month})")
+    
+    uploaded_file = st.file_uploader("גררו קובץ PDF של מאמר", type=["pdf"], key=f"up_{journal_name}_{selected_month}")
+    
+    if uploaded_file and api_key and sheets_url:
+        if st.button("הפעל ניתוח אוטומטי 🚀", key=f"btn_{journal_name}_{selected_month}"):
+            with st.spinner("ה-AI קורא את המאמר המלא ומעדכן את ה-Google Sheets..."):
+                try:
+                    pdf_reader = pypdf.PdfReader(uploaded_file)
+                    article_text = ""
+                    for page in pdf_reader.pages[:15]:
+                        text = page.extract_text()
+                        if text: article_text += text + "\n"
+                    
                     genai.configure(api_key=api_key)
                     model = genai.GenerativeModel("gemini-2.0-flash")
-
-                    # פרומפט להפקת 2 העמודות
+                    
                     prompt = f"""
-                    You are an expert Periodontist and Implantologist summarizing literature for a board exam.
-                    Analyze the following full-text article and generate two specific outputs strictly in Hebrew:
+                    Analyze the following text and extract these fields in Hebrew:
+                    1. 'title_and_authors': Combined English Title and Main Authors (e.g., 'Title of Study - By John Doe et al.').
+                    2. 'summary': A comprehensive 10-line summary of methods and findings in fluent Hebrew.
+                    3. 'one_liner': A single-sentence clinical takeaway in Hebrew.
+                    4. 'topic': Standard category like: פריודונטיטיס ומצבים סיסטמיים, מוקוג'ינג'יבלי, בקרת רובד ותחזוקה, רגנרציה- חומרים וטכניקות- שיניים, טיפולים בפרי אימפלנטיטיס, שרידות ופרוגנוזה- שיניים.
                     
-                    1. 'summary': A professional, comprehensive, and scientifically accurate summary of the study (Objectives, Materials and Methods, Results, and Conclusions) in coherent Hebrew.
-                    2. 'one_liner': A sharp, single-sentence clinical takeaway ('שורה תחתונה') in Hebrew that captures the practical significance of the study.
-
-                    Return the output ONLY as a valid JSON object with the keys 'summary' and 'one_liner'. Do not include any markdown formatting or backticks.
-                    
-                    The article text:
-                    {article_text[:40000]}
+                    Return ONLY a valid JSON object with keys: 'title_and_authors', 'summary', 'one_liner', 'topic'. Do not use markdown blocks.
+                    Text: {article_text[:40000]}
                     """
-
+                    
                     response = model.generate_content(prompt)
-                    raw_response = response.text.strip()
+                    raw_res = response.text.strip().replace("```json", "").replace("```", "").strip()
+                    parsed = json.loads(raw_res)
                     
-                    if raw_response.startswith("```json"):
-                        raw_response = raw_response.replace("```json", "").replace("```", "").strip()
+                    # שליחת הנתונים ל-Google Sheets
+                    payload = {
+                        "journal": journal_name,
+                        "month": selected_month,
+                        "title_and_authors": parsed.get("title_and_authors", ""),
+                        "summary": parsed.get("summary", ""),
+                        "one_liner": parsed.get("one_liner", ""),
+                        "topic": parsed.get("topic", "")
+                    }
                     
-                    result = json.loads(raw_response)
-
-                    st.success("הניתוח הושלם בהצלחה! העתיקו את התוצאות לטבלה:")
+                    requests.post(sheets_url, json=payload)
+                    st.success("המאמר נשמר בהצלחה ב-Google Sheets של המחלקה!")
+                    st.rerun()
                     
-                    st.subheader("📋 עמודה ג': סיכום")
-                    st.text_area(label="סחבו עם העכבר והעתיקו (Copy):", value=result.get("summary", ""), height=250)
+                except Exception as e:
+                    st.error(f"תקלה בעיבוד: {str(e)}")
 
-                    st.subheader("🎯 עמודה ד': סיכום בשורה (שורה תחתונה)")
-                    st.text_area(label="סחבו עם העכבר והעתיקו (Copy):", value=result.get("one_liner", ""), height=70)
-
-            except Exception as e:
-                st.error(f"אירעה תקלה בעיבוד: {str(e)}")
+with tab_jcp: render_journal_tab("JCP")
+with tab_jop: render_journal_tab("JOP")
+with tab_coir: render_journal_tab("COIR")
