@@ -1,4 +1,6 @@
-streamlit
+python-docx
+pandas
+openpyxl
 google-generativeai
 pypdf
 requests
