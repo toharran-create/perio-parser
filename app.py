@@ -25,8 +25,7 @@ st.markdown("<h1>🚀 פורטל מאמרים לפריודונטיה ושתלי�
 st.markdown("<p style='text-align: center; color: #666; font-size: 1.1rem; margin-bottom: 30px;'>ארכיטקטורה מאובטחת (Zero-Secret Frontend) - כל התקשורת מוצפנת ומנוהלת דרך שרת פרוקסי מחלקתי.</p>", unsafe_allow_html=True)
 
 # 🌐 הכתובת של ה-Cloud Run Proxy שלכם (אין בעיה שזה גלוי בגיט, זה רק נתיב ללא הרשאות)
-PROXY_URL = "https://your-cloud-run-url-here.run.app/process-article"
-
+PROXY_URL = "https://pdf-proxy-741291032537.europe-west1.run.app/process-article"
 st.markdown("<div class='upload-container'>", unsafe_allow_html=True)
 uploaded_file = st.file_uploader("גררו ושחררו לכאן את קובץ ה-PDF של המאמר המדעי", type=["pdf"])
 st.markdown("</div>", unsafe_allow_html=True)
