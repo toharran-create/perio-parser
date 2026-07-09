@@ -1,13 +1,9 @@
 import streamlit as st
-import google.generativeai as genai
 import pypdf
-import json
 import requests
-from datetime import datetime
 
 st.set_page_config(page_title="פורטל המאמרים המחלקתי", layout="wide")
 
-# הזרקת עיצוב מודרני מותאם אישית (CSS) עם תמיכה מלאה ב-RTL וכפתורי ניהול
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&display=swap');
@@ -25,125 +21,45 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.markdown("<h1>🚀 פורטל מאמרים לפריודונטיה ושתלים - אוטומציה מלאה</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #666; font-size: 1.1rem; margin-bottom: 30px;'>אין צורך לבחור עיתון או חודש. העלו את ה-PDF והמערכת תזהה, תסכם ותנתב אותו אוטומטית ל-Google Sheets.</p>", unsafe_allow_html=True)
+st.markdown("<h1>🚀 פורטל מאמרים לפריודונטיה ושתלים - סביבה מאובטחת</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #666; font-size: 1.1rem; margin-bottom: 30px;'>ארכיטקטורה מאובטחת (Zero-Secret Frontend) - כל התקשורת מוצפנת ומנוהלת דרך שרת פרוקסי מחלקתי.</p>", unsafe_allow_html=True)
 
-# טעינת נתונים מה-Secrets
-try:
-    api_key = st.secrets["GEMINI_API_KEY"]
-    sheets_url = st.secrets["SHEETS_WEBAPP_URL"]
-except Exception:
-    st.error("❌ שגיאה: נתוני החיבור חסרים ב-Streamlit Secrets. אנא ודאו שהם מוגדרים בלוח הבקרה של הענן.")
-    st.stop()
+# 🌐 הכתובת של ה-Cloud Run Proxy שלכם (אין בעיה שזה גלוי בגיט, זה רק נתיב ללא הרשאות)
+PROXY_URL = "https://your-cloud-run-url-here.run.app/process-article"
 
-# משיכת המידע הקיים מהגיליון לצורך הצגת הארכיון למטה
-db_data = {"JCP": [], "JOP": [], "COIR": []}
-try:
-    response = requests.get(sheets_url, timeout=10)
-    if response.status_code == 200:
-        db_data = response.json()
-except Exception:
-    pass
-
-# אזור העלאת הקובץ
 st.markdown("<div class='upload-container'>", unsafe_allow_html=True)
 uploaded_file = st.file_uploader("גררו ושחררו לכאן את קובץ ה-PDF של המאמר המדעי", type=["pdf"])
 st.markdown("</div>", unsafe_allow_html=True)
 
 if uploaded_file:
-    if st.button("סרוק, סכם ונתב אוטומטית לטבלה המחלקתית ⚡"):
-        with st.spinner("ה-AI קורא את המאמר, מזהה את כתב העת, תאריך הפרסום ומפיק את הסיכומים..."):
+    if st.button("סרוק, סכם ונתב אוטומטית באמצעות הפרוקסי ⚡"):
+        with st.spinner("שרת הפרוקסי מעבד את המאמר ומאבטח את הנתונים..."):
             try:
-                # קריאת 4 עמודים ראשונים מהקובץ (אופטימיזציית עלויות של כ-15 אגורות למאמר)
+                # חילוץ טקסט מ-4 עמודים ראשונים
                 pdf_reader = pypdf.PdfReader(uploaded_file)
                 article_text = ""
                 for page in pdf_reader.pages[:4]:
                     text = page.extract_text()
                     if text: article_text += text + "\n"
                 
-                if len(article_text.strip()) < 100:
-                    st.error("שגיאה: לא הצלחנו לקרוא את הטקסט מה-PDF. ודא שהקובץ אינו סרוק כתמונה.")
-                    st.stop()
+                # שליחת הבקשה לפרוקסי המאובטח שלנו
+                response = requests.post(PROXY_URL, json={"text": article_text}, timeout=30)
                 
-                # הגדרת מודל Gemini 3.5 Flash העדכני
-                genai.configure(api_key=api_key)
-                model = genai.GenerativeModel("gemini-3.5-flash")
-                
-                # פרומפט אוטומטי מלא
-                prompt = f"""
-                Analyze the following scientific dental article text and extract the required information.
-                You must automatically identify the journal (strictly map it to either 'JCP', 'JOP', or 'COIR') and the publication date.
-                
-                Provide the output strictly as a JSON object with the following keys:
-                1. 'journal': Must be exactly 'JCP' (if Journal of Clinical Periodontology), 'JOP' (if Journal of Periodontology), or 'COIR' (if Clinical Oral Implants Research).
-                2. 'month': The publication month and year formatted strictly as MM.YYYY (e.g., '05.2025' or '11.2026'). Look closely at the header/footer metadata.
-                3. 'title_and_authors': Combined English Title and Main Authors (e.g., 'Study Title - By Smith J. et al.').
-                4. 'summary': A detailed summary of methods and findings, strictly spanning approximately 10 lines in coherent Hebrew.
-                5. 'one_liner': A sharp, single-sentence clinical takeaway ('שורה תחתונה') in Hebrew.
-                6. 'topic': Standard category in Hebrew like: פריודונטיטיס ומצבים סיסטמיים, מוקוג'ינג'יבלי, בקרת רובד ותחזוקה, רגנרציה- חומרים וטכניקות- שיניים, טיפולים בפרי אימפלנטיטיס, שרידות ופרוגנוזה- שיניים.
-                
-                Return ONLY the raw JSON object. Do not wrap in markdown syntax.
-                Text:
-                {article_text[:50000]}
-                """
-                
-                response = model.generate_content(prompt)
-                raw_res = response.text.strip().replace("```json", "").replace("```", "").strip()
-                parsed = json.loads(raw_res)
-                
-                detected_journal = parsed.get("journal", "").upper()
-                detected_month = parsed.get("month", "")
-                
-                if detected_journal not in ["JCP", "JOP", "COIR"]:
-                    st.error(f"ה-AI זיהה את העיתון כ-{detected_journal}, אך המערכת תומכת רק ב-JCP, JOP, COIR.")
-                    st.stop()
-                
-                # שיגור אוטומטי ל-Google Sheets
-                payload = {
-                    "journal": detected_journal,
-                    "action": "add",
-                    "month": detected_month,
-                    "title_and_authors": parsed.get("title_and_authors", ""),
-                    "summary": parsed.get("summary", ""),
-                    "one_liner": parsed.get("one_liner", ""),
-                    "topic": parsed.get("topic", "")
-                }
-                
-                api_res = requests.post(sheets_url, json=payload, timeout=15)
-                
-                if api_res.status_code == 200 and "success" in api_res.text:
+                if response.status_code == 200:
+                    result_data = response.json().get("data", {})
                     st.balloons()
-                    st.success(f"🎉 הצלחה! המאמר זוהה כעיתון {detected_journal} (חודש {detected_month}) ונשמר אוטומטית ב-Google Sheets החדש!")
+                    st.success(f"🎉 הצלחה! המאמר נותב אוטומטית לעיתון {result_data.get('journal')} (חודש {result_data.get('month')}) בגיליון המרכזי!")
                     
-                    # הצגת מה שסוכם על המסך לביקורת מהירה
                     st.markdown(f"""
                         <div class="article-card">
-                            <div class="article-title">📄 {parsed.get('title_and_authors')}</div>
-                            <div style="color: #666; font-size: 0.9rem;">📅 עיתון: <b>{detected_journal}</b> | חודש: <b>{detected_month}</b> | נושא: <b>{parsed.get('topic')}</b></div>
-                            <div class="summary-box"><b>📝 סיכום (10 שורות):</b><br>{parsed.get('summary')}</div>
-                            <div class="takeaway-box">🎯 שורה תחתונה: {parsed.get('one_liner')}</div>
+                            <div class="article-title">📄 {result_data.get('title_and_authors')}</div>
+                            <div style="color: #666; font-size: 0.9rem;">📅 עיתון: <b>{result_data.get('journal')}</b> | חודש: <b>{result_data.get('month')}</b> | נושא: <b>{result_data.get('topic')}</b></div>
+                            <div class="summary-box"><b>📝 סיכום (10 שורות):</b><br>{result_data.get('summary')}</div>
+                            <div class="takeaway-box">🎯 שורה תחתונה: {result_data.get('one_liner')}</div>
                         </div>
                     """, unsafe_allow_html=True)
                 else:
-                    st.error(f"המאמר סוכם אך אירעה שגיאה בכתיבה לגיליון: {api_res.text}")
+                    st.error(f"❌ שרת הפרוקסי החזיר שגיאה: {response.text}")
                     
             except Exception as e:
-                st.error(f"תקלה בתהליך העיבוד האוטומטי: {str(e)}")
-
-# חלק תחתון - הצגת ארכיון מהיר לעיון המתמחים
-st.write("---")
-st.markdown("### 🗂️ הצצה מהירה למאמרים הקיימים בגיליון")
-arch_jcp, arch_jop, arch_coir = st.tabs(["JCP Archive", "JOP Archive", "COIR Archive"])
-
-def show_archive(journal_name):
-    rows = db_data.get(journal_name, [])
-    if len(rows) > 1:
-        for row in rows[1:]:
-            if len(row) >= 6:
-                st.markdown(f"- **[{row[1]}]** {row[2]} | *שורה תחתונה:* {row[4]}")
-    else:
-        st.info("אין עדיין מאמרים רשומים בלשונית זו ב-Sheets החדש.")
-
-with arch_jcp: show_archive("JCP")
-with arch_jop: show_archive("JOP")
-with arch_coir: show_archive("COIR")
+                st.error(f"תקלה בתקשורת מול שרת הפרוקסי: {str(e)}")
