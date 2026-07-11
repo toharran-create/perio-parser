@@ -4,40 +4,93 @@ import requests
 
 st.set_page_config(page_title="פורטל המאמרים המחלקתי", layout="wide")
 
-# הזרקת עיצוב מודרני מותאם אישית (CSS) כולל עיצוב למלבני המדדים
+# הזרקת שפת העיצוב הרשמית של Google Workspace (Material Design)
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;500;600;700&display=swap');
+    
     html, body, [data-testid="stAppViewContainer"] {
         font-family: 'Assistant', sans-serif;
-        direction: RTL; text-align: right; background-color: #f8f9fa;
+        direction: RTL; text-align: right; 
+        background-color: #f8f9fa; /* הרקע הבהיר של גוגל */
+        color: #202124; /* צבע הטקסט הרשמי של גוגל */
     }
-    h1 { color: #1e3d59; font-weight: 700; text-align: center; margin-top: 15px; margin-bottom: 5px; }
-    .upload-container { background-color: #ffffff; padding: 25px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 25px; border-top: 5px solid #1e3d59; margin-top: 20px; }
-    .article-card { background-color: #ffffff; padding: 22px; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom: 20px; border-right: 6px solid #1e3d59; }
-    .summary-box { background-color: #f5f7fa; padding: 15px; border-radius: 8px; border: 1px solid #e1e8ed; line-height: 1.6; margin-top: 10px; }
-    .takeaway-box { background-color: #e8f5e9; padding: 12px; border-radius: 8px; border-right: 4px solid #2e7d32; font-weight: bold; color: #1b5e20; margin-top: 10px; }
-    div.stButton > button:first-child { background-color: #1e3d59; color: white; font-weight: bold; font-size: 1.1rem; padding: 12px; border-radius: 8px; border: none; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
     
-    /* עיצוב כרטיסי המדדים (4 המלבנים) */
-    .metric-card {
-        padding: 20px; border-radius: 12px; text-align: center; 
-        box-shadow: 0 4px 10px rgba(0,0,0,0.04); transition: transform 0.2s;
+    h1 { 
+        color: #1a73e8; /* כחול גוגל */
+        font-weight: 500; text-align: center; 
+        margin-top: 30px; margin-bottom: 5px;
+        font-size: 2.1rem;
     }
-    .metric-card:hover { transform: translateY(-2px); }
-    .metric-title { font-size: 1.05rem; font-weight: 600; margin: 0; }
-    .metric-value { font-size: 2.3rem; font-weight: 700; margin: 5px 0 0 0; line-height: 1; }
+    
+    /* תיבת העלאת קבצים נקייה - בסגנון Google Drive */
+    .upload-container { 
+        background-color: #ffffff; padding: 30px; 
+        border-radius: 8px; border: 1px solid #dadce0; 
+        margin-bottom: 30px; margin-top: 15px;
+    }
+    
+    /* מלבני המדדים החדשים - נקיים, מקצועיים ללא רקע צעקני */
+    .metric-card {
+        background-color: #ffffff; padding: 20px; 
+        border-radius: 8px; border: 1px solid #dadce0;
+        text-align: right; position: relative;
+    }
+    .metric-title { 
+        font-size: 0.88rem; font-weight: 500; 
+        color: #5f6368; /* אפור משני של גוגל */
+        margin: 0; 
+    }
+    .metric-value { 
+        font-size: 2.2rem; font-weight: 600; 
+        color: #202124; margin: 8px 0 0 0; 
+        line-height: 1;
+    }
+    
+    /* כרטיסיית מאמר מעוצבת כדף מידע נקי */
+    .article-card { 
+        background-color: #ffffff; padding: 24px; 
+        border-radius: 8px; border: 1px solid #dadce0;
+        margin-bottom: 20px; 
+    }
+    .article-title { 
+        color: #1a73e8; font-size: 1.2rem; 
+        font-weight: 600; margin-bottom: 6px; 
+    }
+    .summary-box { 
+        background-color: #f1f3f4; color: #3c4043;
+        padding: 16px; border-radius: 6px; 
+        line-height: 1.6; margin-top: 12px; font-size: 0.95rem;
+    }
+    .takeaway-box { 
+        background-color: #e6f4ea; padding: 14px; 
+        border-radius: 6px; font-weight: 500; 
+        color: #137333; /* ירוק מעודן של גוגל */
+        margin-top: 12px; font-size: 0.95rem;
+        border-right: 4px solid #137333;
+    }
+    
+    /* כפתור גוגל רשמי (Google Flat Button) */
+    div.stButton > button:first-child { 
+        background-color: #1a73e8; color: white; 
+        font-weight: 500; font-size: 0.95rem; 
+        padding: 10px 24px; border-radius: 4px; 
+        border: none; width: 100%; transition: background-color 0.2s;
+    }
+    div.stButton > button:first-child:hover {
+        background-color: #1557b0; box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3);
+    }
     </style>
 """, unsafe_allow_html=True)
 
 st.markdown("<h1>🔬 פורטל מאמרים לפריודונטיה ושתלים</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #666; font-size: 1.05rem; margin-bottom: 25px;'>מערכת ענן מאובטחת לניהול, ניתוח וקטלוג ספרות הבחינה המחלקתית</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #5f6368; font-size: 1.05rem; margin-bottom: 35px;'>מערכת ענן מאובטחת לניהול וקטלוג ספרות הבחינה המחלקתית</p>", unsafe_allow_html=True)
 
-# 🌐 נתיבי השרת המאובטח ב-Cloud Run (ללא סודות גלויים)
+# 🌐 נתוני שרת הפרוקסי שלכם ב-Cloud Run
 PROXY_PROCESS_URL = "https://pdf-proxy-741291032537.europe-west1.run.app/process-article"
 PROXY_DATA_URL = "https://pdf-proxy-741291032537.europe-west1.run.app/get-data"
 
-# משיכת המידע העדכני מחשבון ה-Sheets דרך השרת המאובטח
+# משיכת המידע העדכני
 db_data = {"JCP": [], "JOP": [], "COIR": []}
 try:
     response = requests.get(PROXY_DATA_URL, timeout=10)
@@ -46,55 +99,55 @@ try:
 except Exception:
     pass
 
-# חישוב כמויות המאמרים בזמן אמת (פחות שורת הכותרת הראשונה של הגיליון)
+# חישוב כמויות המאמרים
 count_jcp = max(0, len(db_data.get("JCP", [])) - 1)
 count_jop = max(0, len(db_data.get("JOP", [])) - 1)
 count_coir = max(0, len(db_data.get("COIR", [])) - 1)
 total_articles = count_jcp + count_jop + count_coir
 
-# 📊 יצירת אזור 4 המלבנים הצבעוניים בראש העמוד
+# 📊 תצוגת המדדים החדשה בסגנון Google Workspace Dashboard
 col1, col2, col3, col4 = st.columns(4, gap="medium")
 
 with col1:
     st.markdown(f"""
-        <div class="metric-card" style="background-color: #e3f2fd; border-bottom: 5px solid #1e88e5;">
-            <p class="metric-title" style="color: #0d47a1;">עיתון JCP</p>
-            <p class="metric-value" style="color: #0d47a1;">{count_jcp}</p>
+        <div class="metric-card" style="border-right: 5px solid #1a73e8;">
+            <p class="metric-title">עיתון JCP</p>
+            <p class="metric-value">{count_jcp}</p>
         </div>
     """, unsafe_allow_html=True)
 
 with col2:
     st.markdown(f"""
-        <div class="metric-card" style="background-color: #e0f2f1; border-bottom: 5px solid #00897b;">
-            <p class="metric-title" style="color: #004d40;">עיתון JOP</p>
-            <p class="metric-value" style="color: #004d40;">{count_jop}</p>
+        <div class="metric-card" style="border-right: 5px solid #137333;">
+            <p class="metric-title">עיתון JOP</p>
+            <p class="metric-value">{count_jop}</p>
         </div>
     """, unsafe_allow_html=True)
 
 with col3:
     st.markdown(f"""
-        <div class="metric-card" style="background-color: #fff3e0; border-bottom: 5px solid #fb8c00;">
-            <p class="metric-title" style="color: #e65100;">עיתון COIR</p>
-            <p class="metric-value" style="color: #e65100;">{count_coir}</p>
+        <div class="metric-card" style="border-right: 5px solid #e37400;">
+            <p class="metric-title">עיתון COIR</p>
+            <p class="metric-value">{count_coir}</p>
         </div>
     """, unsafe_allow_html=True)
 
 with col4:
     st.markdown(f"""
-        <div class="metric-card" style="background-color: #1e3d59; border-bottom: 5px solid #17b978;">
-            <p class="metric-title" style="color: #ffffff;">סה"כ מאמרים בפורטל</p>
-            <p class="metric-value" style="color: #17b978;">{total_articles}</p>
+        <div class="metric-card" style="border-right: 5px solid #3c4043; background-color: #f1f3f4;">
+            <p class="metric-title" style="color: #202124;">סה"כ מאמרים</p>
+            <p class="metric-value" style="color: #202124;">{total_articles}</p>
         </div>
     """, unsafe_allow_html=True)
 
 # אזור העלאת הקובץ
 st.markdown("<div class='upload-container'>", unsafe_allow_html=True)
-uploaded_file = st.file_uploader("גררו ושחררו לכאן את קובץ ה-PDF של המאמר המדעי", type=["pdf"])
+uploaded_file = st.file_uploader("בחרו או גררו קובץ PDF של מאמר מדעי לסריקה:", type=["pdf"])
 st.markdown("</div>", unsafe_allow_html=True)
 
 if uploaded_file:
-    if st.button("סרוק, סכם ונתב אוטומטית באמצעות הפרוקסי ⚡"):
-        with st.spinner("שרת הפרוקסי המאובטח מעבד ומקטלג את המאמר..."):
+    if st.button("הפעל עיבוד וקטלוג אוטומטי"):
+        with st.spinner("שרת הפרוקסי מאבטח ומעבד את הנתונים..."):
             try:
                 pdf_reader = pypdf.PdfReader(uploaded_file)
                 article_text = ""
@@ -107,25 +160,27 @@ if uploaded_file:
                 if response.status_code == 200:
                     result_data = response.json().get("data", {})
                     st.balloons()
-                    st.success(f"🎉 הצלחה! המאמר נשמר אוטומטית בעיתון {result_data.get('journal')} (חודש {result_data.get('month')})!")
+                    st.success(f"המאמר קוטלג בהצלחה והוזרק לעיתון {result_data.get('journal')} תחת חודש {result_data.get('month')}.")
                     
                     st.markdown(f"""
                         <div class="article-card">
                             <div class="article-title">📄 {result_data.get('title_and_authors')}</div>
-                            <div style="color: #666; font-size: 0.9rem;">📅 עיתון: <b>{result_data.get('journal')}</b> | חודש: <b>{result_data.get('month')}</b> | נושא: <b>{result_data.get('topic')}</b></div>
-                            <div class="summary-box"><b>📝 סיכום (10 שורות):</b><br>{result_data.get('summary')}</div>
-                            <div class="takeaway-box">🎯 שורה תחתונה: {result_data.get('one_liner')}</div>
+                            <div style="color: #5f6368; font-size: 0.88rem; margin-bottom: 12px;">
+                                📅 עיתון: <b>{result_data.get('journal')}</b> | חודש: <b>{result_data.get('month')}</b> | נושא: <b>{result_data.get('topic')}</b>
+                            </div>
+                            <div class="summary-box"><b>📝 סיכום מאמר מחלקתי:</b><br>{result_data.get('summary')}</div>
+                            <div class="takeaway-box">🎯 שורה תחתונה קלינית: {result_data.get('one_liner')}</div>
                         </div>
                     """, unsafe_allow_html=True)
                     st.rerun()
                 else:
-                    st.error(f"❌ שרת הפרוקסי החזיר שגיאה: {response.text}")
+                    st.error(f"שגיאה בעיבוד המאמר: {response.text}")
             except Exception as e:
-                st.error(f"תקלה בתקשורת מול שרת הפרוקסי: {str(e)}")
+                st.error(f"תקלה בתקשורת מול שרת הענן: {str(e)}")
 
-# חלק תחתון - הצצה מהירה לארכיון הקיים
+# חלק תחתון - ארכיון המאמרים
 st.write("---")
-st.markdown("### 🗂️ הצצה מהירה למאמרים הקיימים בגיליון")
+st.markdown("<h3 style='color: #202124; font-size: 1.3rem; font-weight: 500; margin-bottom: 15px;'>🗂️ ארכיון המאמרים המוקלטים</h3>", unsafe_allow_html=True)
 arch_jcp, arch_jop, arch_coir = st.tabs(["JCP Archive", "JOP Archive", "COIR Archive"])
 
 def show_archive(journal_name):
@@ -133,9 +188,15 @@ def show_archive(journal_name):
     if len(rows) > 1:
         for row in rows[1:]:
             if len(row) >= 6:
-                st.markdown(f"- **[{row[1]}]** {row[2]} | *נושא:* {row[5]} | *שורה תחתונה:* {row[4]}")
+                st.markdown(f"""
+                    <div style="padding: 10px 0; border-bottom: 1px solid #f1f3f4;">
+                        <span style="color: #1a73e8; font-weight: 600; margin-left: 10px;">[{row[1]}]</span> 
+                        <span style="color: #202124; font-weight: 500;">{row[2]}</span>
+                        <br><small style="color: #5f6368;"><b>נושא:</b> {row[5]} | <b>שורה תחתונה:</b> {row[4]}</small>
+                    </div>
+                """, unsafe_allow_html=True)
     else:
-        st.info("אין עדיין מאמרים רשומים בלשונית זו ב-Sheets.")
+        st.info("אין עדיין מאמרים רשומים בלשונית זו ב-Google Sheets.")
 
 with arch_jcp: show_archive("JCP")
 with arch_jop: show_archive("JOP")
