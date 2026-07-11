@@ -83,7 +83,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.markdown("<h1>🔬 פורטל מאמרים לפריודונטיה ושתלים</h1>", unsafe_allow_html=True)
+st.markdown("<h1> פורטל מאמרים לשלב א'פריודונטיה </h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; color: #5f6368; font-size: 1.05rem; margin-bottom: 35px;'>מערכת ענן מאובטחת לניהול וקטלוג ספרות הבחינה המחלקתית</p>", unsafe_allow_html=True)
 
 # 🌐 נתוני שרת הפרוקסי שלכם ב-Cloud Run
